@@ -97,21 +97,19 @@ class AlphaBetaAgent(Agent):
             tuple: A tuple containing the best value achievable from this state and the action that leads to this value.
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
-        if (self.is_cutoff(state, depth)) :
-            return (-float("inf"), None)
-              
-        else :
-            best_value = -float("inf")
-            best_action = None
-            for action in state.actions():
-                value = self.min_value(result(state, action), alpha, beta, depth + 1)
-                if value > best_value:
-                    best_value = value
-                    best_action = action
-                if best_value >= beta:
-                    return (best_value, best_action)
+        if (self.is_cutoff(state)) :
+            return (self.eval(state), None)
+        
+        best_value = -float("inf")
+        
+        for action in self.actions(state):
+            value2, action2 = self.min_value(self.result(state, action), alpha, beta, depth + 1)
+            if value > best_value:
+                best_value, best_action = value2, action
                 alpha = max(alpha, best_value)
-            return (best_value, best_action)
+            if best_value >= beta:
+                return (best_value, best_action)
+        return (best_value, best_action)
     
 
 
@@ -133,17 +131,15 @@ class AlphaBetaAgent(Agent):
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
         if (self.is_cutoff(state, depth)) :
-            return (float("inf"), None)
+            return (self.eval(state), None)
   
-        else :
-            best_value = float("inf")
-            best_action = None
-            for action in state.actions():
-                value = self.max_value(result(state, action), alpha, beta, depth + 1)
-                if value < best_value:
-                    best_value = value
-                    best_action = action
-                if best_value <= alpha:
-                    return (best_value, best_action)
+        best_value = float("inf")
+
+        for action in state.actions():
+            value2, action2 = self.max_value(self.result(state, action), alpha, beta, depth + 1)
+            if value2 < best_value:
+                best_value, best_action = value2, action
                 beta = min(beta, best_value)
-            return (best_value, best_action)
+            if best_value <= alpha:
+                return (best_value, best_action)
+        return (best_value, best_action)
