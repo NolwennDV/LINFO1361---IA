@@ -94,7 +94,11 @@ class UCTAgent(Agent):
         Returns:
             Node: The selected leaf node.
         """
-        ...
+        if (node.N == 0) : 
+            return node
+        max_UCB1_score = max(root.children, key=lambda n: n.UCB1())
+        select(root.children.get(max_UCB1_score))
+
     
     def expand(self, node):
         """Expands a node by adding a child node to the tree for an unexplored action.
@@ -109,7 +113,11 @@ class UCTAgent(Agent):
         Returns:
             Node: The child node selected. If the node is at a terminal state, the node itself is returned.
         """
-        ...
+        if (self.game.is_terminal(state)) : return node
+        
+        child = self.__init__(node, self.play(state, None)) #jsp quoi lui mettre comme state
+        node.children[child] = self.play(state, None)
+        return child
 
     def simulate(self, state):
         """Simulates a random play-through from the given state to a terminal state.
