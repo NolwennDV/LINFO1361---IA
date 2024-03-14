@@ -128,7 +128,22 @@ class UCTAgent(Agent):
         Returns:
             float: The utility value of the resulting terminal state in the point of view of the opponent in the original state.
         """
-        ...
+        sim_state = state
+
+        for i in range 500 :
+
+            if self.game.is_terminal(sim_state) :
+                return self.utility(sim_state, (self.player + 1) % 2) 
+
+            actions = self.game.actions(sim_state)
+            if len(actions) == 0:
+                raise Exception("No actions available")
+            choosen_action = random.choice(actions)
+
+            new_state = self.result(sim_state, choosen_action)
+            sim_state = new_state
+
+        return self.compute_utility(state.board, (self.player + 1) % 2, state.actions)
 
     def back_propagate(self, result, node):
         """Propagates the result of a simulation back up the tree, updating node statistics.
@@ -142,7 +157,12 @@ class UCTAgent(Agent):
             result (float): The result of the simulation.
             node (Node): The node to start backpropagation from.
         """
-        ...
+        if (node.parent == None) return 
+
+        node.U += -result
+        node.N += 1 
+
+        self.back_propagate(-result, node.parent)
 
     def UCB1(self, node):
         """Calculates the UCB1 value for a given node.
