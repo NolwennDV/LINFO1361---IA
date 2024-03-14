@@ -45,7 +45,7 @@ class AlphaBetaAgent(Agent):
         Returns:
             bool: True if the search should be cut off, False otherwise.
         """
-        return depth >= self.max_depth or self.game.is_terminal(state)
+        return (depth >= self.max_depth) or (self.game.is_terminal(state))
 
     
     def eval(self, state):
@@ -64,10 +64,10 @@ class AlphaBetaAgent(Agent):
         min_pieces_opponent = 4
 
         for i in range(4):
-            min_pieces_player = min(min_pieces_player, len(state.boards[i][self.player]))
-            min_pieces_opponent = min(min_pieces_opponent, len(state.boards[i][(self.player + 1) % 2]))
+            min_pieces_player = min(min_pieces_player, len(state.board[i][self.player]))
+            min_pieces_opponent = min(min_pieces_opponent, len(state.board[i][(self.player + 1) % 2]))
 
-        return min_pieces_player - min_pieces_opponent
+        return (float) (min_pieces_player - min_pieces_opponent)
 
     def alpha_beta_search(self, state):
         """Implements the alpha-beta pruning algorithm to find the best action.
@@ -97,14 +97,14 @@ class AlphaBetaAgent(Agent):
             tuple: A tuple containing the best value achievable from this state and the action that leads to this value.
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
-        if (self.is_cutoff(state)) :
+        if (self.is_cutoff(state, depth)) :
             return (self.eval(state), None)
         
         best_value = -float("inf")
         
-        for action in self.actions(state):
-            value2, action2 = self.min_value(self.result(state, action), alpha, beta, depth + 1)
-            if value > best_value:
+        for action in state.actions :
+            value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
+            if value2 > best_value:
                 best_value, best_action = value2, action
                 alpha = max(alpha, best_value)
             if best_value >= beta:
@@ -135,8 +135,8 @@ class AlphaBetaAgent(Agent):
   
         best_value = float("inf")
 
-        for action in state.actions():
-            value2, action2 = self.max_value(self.result(state, action), alpha, beta, depth + 1)
+        for action in state.actions :
+            value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
             if value2 < best_value:
                 best_value, best_action = value2, action
                 beta = min(beta, best_value)

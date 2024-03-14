@@ -97,7 +97,7 @@ class UCTAgent(Agent):
         if (node.N == 0) : 
             return node
         max_UCB1_score = max(root.children, key=lambda n: n.UCB1())
-        select(root.children.get(max_UCB1_score))
+        return self.select(root.children.get(max_UCB1_score))
 
     
     def expand(self, node):
@@ -130,7 +130,7 @@ class UCTAgent(Agent):
         """
         sim_state = state
 
-        for i in range 500 :
+        for i in range (500) :
 
             if self.game.is_terminal(sim_state) :
                 return self.utility(sim_state, (self.player + 1) % 2) 
@@ -157,7 +157,7 @@ class UCTAgent(Agent):
             result (float): The result of the simulation.
             node (Node): The node to start backpropagation from.
         """
-        if (node.parent == None) return 
+        if (node.parent == None) : return 
 
         node.U += -result
         node.N += 1 
