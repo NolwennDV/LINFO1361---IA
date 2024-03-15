@@ -97,15 +97,12 @@ class UCTAgent(Agent):
         if (self.game.is_terminal(node.state)) : 
             return node
 
-        best_score = -float("inf")
-        for child in node.children.keys():
+        for child in node.children:
             if (child.N == 0) :
                 return node
-            if (self.UCB1(node) > best_score) :
-                best_node = node
-                best_score = self.UCB1(node)
 
-        return self.select(best_node)
+        max_UCB1_score = max(node.children, key=lambda n: self.UCB1(n))
+        return self.select(max_UCB1_score)
 
     
     def expand(self, node):
@@ -124,15 +121,14 @@ class UCTAgent(Agent):
         if (self.game.is_terminal(node.state)) : 
             return node
         
-        for action in self.game.actions(node.state) :
-            if action not in node.children.values() :
-                next_state = self.game.result(node.state, action)
-                child = Node (node, next_state)
-                node.children[child] = action
-
+        for child in node.children :
+            if(child.N == 0) :
+                for action in self.game.actions(child.state) :
+                    child_child = Node(child, self.game.result(child.state, action))
+                    child.children[child_child] = action
                 return child
 
-        return node
+        return node 
 
     def simulate(self, state):
         """Simulates a random play-through from the given state to a terminal state.
@@ -145,18 +141,17 @@ class UCTAgent(Agent):
         """
         sim_state = state
 
-        for i in range (500) :
+        for _ in range (100) :
 
             if self.game.is_terminal(sim_state) :
-                return self.utility(sim_state, (self.player + 1) % 2) 
+                return -sim_state.utility if state.to_move == 0 else sim_state.utility
 
             actions = self.game.actions(sim_state)
             choosen_action = random.choice(actions)
+            sim_state = self.game.result(sim_state, choosen_action)
+        
+        return -sim_state.utility if state.to_move == 0 else sim_state.utility
 
-            new_state = self.result(sim_state, choosen_action)
-            sim_state = new_state
-
-        return self.compute_utility(sim_state.board, (self.player + 1) % 2, sim_state.actions)
 
     def back_propagate(self, result, node):
         """Propagates the result of a simulation back up the tree, updating node statistics.
@@ -170,11 +165,12 @@ class UCTAgent(Agent):
             result (float): The result of the simulation.
             node (Node): The node to start backpropagation from.
         """
-        if (node.parent == None) : return 
-
-        node.U += -result
+         
+        if (result == 1) :
+            node.U += 1
         node.N += 1 
 
+        if (node.parent == None) : return
         self.back_propagate(-result, node.parent)
 
     def UCB1(self, node):
