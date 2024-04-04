@@ -2,6 +2,7 @@ from random_agent import RandomAgent
 from template_alphabeta import AlphaBetaAgent
 from template_uct import UCTAgent
 from template_contest import AI
+from template_contest_1 import AI as AI1
 from shobu import ShobuAction, ShobuState, ShobuGame
 
 from logs import *
@@ -23,6 +24,8 @@ def get_agents(args, display):
             return UCTAgent(player, ShobuGame(), 1000)
         elif agent_name == "agent":
             return AI(player, ShobuGame())
+        elif agent_name == "agent1":
+            return AI1(player, ShobuGame())
         else:
             raise Exception(f"Invalid player: {agent_name}")
     
@@ -77,6 +80,9 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                     raise Exception(f"Invalid action: {action}")
                 
                 state = game.result(state, action)
+                #time.sleep(1)
+                agent_black.eval_prints(state)
+                #agent_black.print_tree(state, -float("inf"), float("inf"), 0)
 
                 n_moves += 1
 

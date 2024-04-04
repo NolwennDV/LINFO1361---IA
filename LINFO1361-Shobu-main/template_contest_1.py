@@ -281,10 +281,7 @@ class AI(Agent):
         piecesPlayerThreatened, totPiecesPlayerThreatened = self.PotentialAttacksAgainstMe(state)
         #return 10*(5*piecesPlayer - piecesOpponent) + 0.01*mobilityAdvantage + 2*(totPiecesOpponentThreatened - 12*totPiecesPlayerThreatened) + 0.5*control_score CA FONCTIONNE ICIIIIII
         if(piecesOpponent == 1):
-            if(piecesPlayer > 1):
-                attack = 10
-            else:
-                attack = 3
+            attack = 1
         else :
             attack = 1
         if(piecesPlayer < 3):
@@ -292,7 +289,7 @@ class AI(Agent):
         else :
             defense = 1
 
-        return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*mobilityAdvantage + 4*(attack*totPiecesOpponentThreatened - 6*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesPlayerThreatened - piecesOpponentThreatened)
+        return 20*(defense*5*piecesPlayer - piecesOpponent) + 0.01*mobilityAdvantage + 2*(attack*totPiecesOpponentThreatened - 12*totPiecesPlayerThreatened) + 1*control_score + 0*(piecesPlayerThreatened - piecesOpponentThreatened)
     
     
     def eval_prints(self, state):
