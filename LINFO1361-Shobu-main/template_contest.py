@@ -152,12 +152,16 @@ class AI(Agent):
         """
         min_pieces_player = 4
         min_pieces_opponent = 4
+        tot_pieces_player = 0
+        tot_pieces_opponent = 0
 
         for i in range(4):
             min_pieces_player = min(min_pieces_player, len(state.board[i][self.player]))
+            tot_pieces_player = len(state.board[i][self.player])
             min_pieces_opponent = min(min_pieces_opponent, len(state.board[i][(self.player + 1) % 2]))
+            tot_pieces_opponent = len(state.board[i][(self.player + 1) % 2])
 
-        return min_pieces_player, min_pieces_opponent
+        return min_pieces_player, min_pieces_opponent, tot_pieces_player, tot_pieces_opponent
 
     def degreOfMobility (self, state):
         """The score returned is the difference between the number of possible actions of the player minus the number of possible from the opponent.
@@ -274,7 +278,7 @@ class AI(Agent):
             float: The evaluated score of the state.
         """
 
-        piecesPlayer, piecesOpponent = self.numberOfPiece(state)
+        piecesPlayer, piecesOpponent, tot_pieces_player, tot_pieces_opponent = self.numberOfPiece(state)
         mobilityAdvantage = self.degreOfMobility(state)
         control_score = self.evaluate_board_control(state)
         piecesOpponentThreatened, totPiecesOpponentThreatened = self.PotentialAttacksToOpponent(state)
@@ -285,18 +289,26 @@ class AI(Agent):
                 attack = 10
             else:
                 attack = 3
+        elif (piecesOpponent == 2):
+            if(piecesPlayer > 2):
+                attack = 5
+            else:
+                attack = 2
         else :
             attack = 1
+
         if(piecesPlayer < 3):
             defense = 5
         else :
             defense = 1
 
-        return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*mobilityAdvantage + 4*(attack*totPiecesOpponentThreatened - 6*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesPlayerThreatened - piecesOpponentThreatened)
-    
+
+        return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*mobilityAdvantage + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesPlayerThreatened - piecesOpponentThreatened)
+        #return 20*attack*(tot_pieces_player*piecesPlayer - tot_pieces_opponent*piecesOpponent) + 4*(tot_pieces_player*totPiecesOpponentThreatened - tot_pieces_opponent*totPiecesPlayerThreatened) + 0.05*mobilityAdvantage
+
     
     def eval_prints(self, state):
-        piecesPlayer, piecesOpponent = self.numberOfPiece(state)
+        piecesPlayer, piecesOpponent, tot_pieces_player, tot_pieces_opponent = self.numberOfPiece(state)
         mobilityAdvantage = self.degreOfMobility(state)
         control_score = self.evaluate_board_control(state)
         piecesOpponentThreatened, totPiecesOpponentThreatened = self.PotentialAttacksToOpponent(state)

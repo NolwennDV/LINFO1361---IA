@@ -3,6 +3,7 @@ from template_alphabeta import AlphaBetaAgent
 from template_uct import UCTAgent
 from template_contest import AI
 from template_contest_1 import AI as AI1
+#from template_contest_test import AI as AITest
 from shobu import ShobuAction, ShobuState, ShobuGame
 
 from logs import *
