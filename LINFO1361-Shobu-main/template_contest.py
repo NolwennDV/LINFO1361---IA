@@ -20,6 +20,8 @@ class AI(Agent):
         """
         super().__init__(player, game)
         self.max_depth = 2
+        #self.initial_max_depth = 2
+        #self.time_budget = None
 
     def play(self, state, remaining_time):
         """Determines the best action by applying the alpha-beta pruning algorithm.
@@ -33,8 +35,35 @@ class AI(Agent):
         Returns:
             ShobuAction: The action determined to be the best by the alpha-beta algorithm.
         """
+        """
+        if (self.time_budget == None) :
+            self.time_budget = remaining_time
+
+        self.adjust_search_depth(remaining_time, state)
+        """
         return self.alpha_beta_search(state)
-    
+
+    """
+    def adjust_search_depth(self, remaining_time, state):
+
+        if self.time_budget is not None:
+            time_per_move = remaining_time / max(1, len(state.actions))
+            if time_per_move > self.time_budget * 0.01:  # Arbitrary threshold
+                self.max_depth = min(3, self.initial_max_depth + 1)  # Increase depth
+            else:
+                self.max_depth = self.initial_max_depth
+
+        # Adjust based on game phase or complexity (optional)
+        # For instance, if fewer pieces are on the board, you might want to increase depth
+        pieces_count = sum(len(board[player]) for board in state.board for player in range(2))
+        if pieces_count < 12:  # Arbitrary example threshold
+            self.max_depth = min(3, self.initial_max_depth + 1)
+
+        # Consider decreasing depth if very few moves are left to make
+        if remaining_time < self.time_budget * 0.05:  # If less than 5% of time is left
+            self.max_depth = max(2, self.max_depth - 1)  # Decrease depth
+    """
+
     def is_cutoff(self, state, depth):
         """Determines if the search should be cut off at the current depth.
 
@@ -57,8 +86,28 @@ class AI(Agent):
             ShobuAction: The best action as determined by the alpha-beta algorithm.
         """
         _, action = self.max_value(state, -float("inf"), float("inf"), 0)
-        
         return action
+    
+    def order_moves_based_on_eval(self, state, isReverse):
+
+        moves_scores = [(action, self.shallow_eval(self.game.result(state, action))) for action in state.actions]
+        moves_scores.sort(key=lambda x: x[1], reverse=isReverse)  # Assuming maximizing player; reverse for minimizing
+        ordered_moves = [move for move, _ in moves_scores]
+        return ordered_moves
+    
+    def shallow_eval(self, state):
+        """Shallow evaluation function for move ordering."""
+        min_pieces_player = 4
+        min_pieces_opponent = 4
+        tot_pieces_player = 0
+        tot_pieces_opponent = 0 
+        for i in range(4):
+            min_pieces_player = min(min_pieces_player, len(state.board[i][self.player]))
+            min_pieces_opponent = min(min_pieces_opponent, len(state.board[i][(self.player + 1) % 2]))
+            tot_pieces_player += len(state.board[i][self.player])
+            tot_pieces_opponent += len(state.board[i][(self.player + 1) % 2])
+        return (tot_pieces_player-tot_pieces_opponent)
+        #return float(5*min_pieces_player - min_pieces_opponent)**3
 
     def max_value(self, state, alpha, beta, depth):
         """Computes the maximum achievable value for the current player at a given state using the alpha-beta pruning.
@@ -80,8 +129,9 @@ class AI(Agent):
             return (self.eval(state), None)
         
         best_value = -float("inf")
-        
-        for action in state.actions :
+        best_action = None
+
+        for action in self.order_moves_based_on_eval(state, True):  # Ordering moves based on evaluation
             value2, action2 = self.min_value(self.game.result(state, action), alpha, beta, depth + 1)
             if value2 > best_value:
                 best_value, best_action = value2, action
@@ -89,8 +139,7 @@ class AI(Agent):
             if best_value >= beta:
                 return (best_value, best_action)
         return (best_value, best_action)
-    
-
+            
 
     def min_value(self, state, alpha, beta, depth):
         """Computes the minimum achievable value for the opposing player at a given state using the alpha-beta pruning.
@@ -113,8 +162,9 @@ class AI(Agent):
             return (self.eval(state), None)
   
         best_value = float("inf")
+        best_action = None
 
-        for action in state.actions :
+        for action in self.order_moves_based_on_eval(state, False):  # Ordering moves based on evaluation
             value2, action2 = self.max_value(self.game.result(state, action), alpha, beta, depth + 1)
             if value2 < best_value:
                 best_value, best_action = value2, action
@@ -305,8 +355,7 @@ class AI(Agent):
 
         return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*mobilityAdvantage + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesPlayerThreatened - piecesOpponentThreatened)
         #return 20*attack*(tot_pieces_player*piecesPlayer - tot_pieces_opponent*piecesOpponent) + 4*(tot_pieces_player*totPiecesOpponentThreatened - tot_pieces_opponent*totPiecesPlayerThreatened) + 0.05*mobilityAdvantage
-
-    
+  
     def eval_prints(self, state):
         piecesPlayer, piecesOpponent, tot_pieces_player, tot_pieces_opponent = self.numberOfPiece(state)
         mobilityAdvantage = self.degreOfMobility(state)

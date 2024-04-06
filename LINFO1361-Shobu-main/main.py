@@ -46,6 +46,8 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
 
     if display:
         init_pygame()
+    
+    debunker = AI1(1, ShobuGame())
 
     remaining_time_0 = play_time
     remaining_time_1 = play_time
@@ -66,11 +68,13 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                         remaining_time_0 -= time.perf_counter() - t0
                 elif game.to_move(state) == 1:
                     t0 = time.perf_counter()
+                    debunker.play(state, remaining_time_1)
                     action = agent_black.play(state, remaining_time_1)
                     while action == -2:
                         action = agent_black.play(state)
                     if play_time is not None:
                         remaining_time_1 -= time.perf_counter() - t0
+                    print("action = "+ str(action) + "delay_time = " + str(time.perf_counter() - t0))
                 else:
                     raise Exception(f"Invalid player: {state.to_move}")
                 
@@ -82,9 +86,9 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                 
                 state = game.result(state, action)
                 #time.sleep(1)
-                agent_black.eval_prints(state)
+                #agent_black.eval_prints(state)
                 #agent_black.print_tree(state, -float("inf"), float("inf"), 0)
-
+                #print("n_moves = %d", n_moves)
                 n_moves += 1
 
             if display:

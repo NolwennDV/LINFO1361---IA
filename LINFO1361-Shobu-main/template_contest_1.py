@@ -1,6 +1,8 @@
 from agent import Agent
 import random
 
+import time
+
 class AI(Agent):
     """An agent that plays following your algorithm.
 
@@ -33,7 +35,13 @@ class AI(Agent):
         Returns:
             ShobuAction: The action determined to be the best by the alpha-beta algorithm.
         """
-        return self.alpha_beta_search(state)
+        start_time = time.time()
+        action = self.alpha_beta_search(state)
+        delay_time = time.time() - start_time
+        if(self.player == 1):
+            print("action1 = " + str(action) + "delay_time1 = " + str(delay_time))
+
+        return action
     
     def is_cutoff(self, state, depth):
         """Determines if the search should be cut off at the current depth.
