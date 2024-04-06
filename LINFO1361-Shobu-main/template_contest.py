@@ -49,13 +49,12 @@ class AI(Agent):
         #print("time to perform depth adjustment = ", time.time() - start_search_depth)
         
         return self.alpha_beta_search(state)
-
-    
+   
     def adjust_search_depth(self, remaining_time, state):
 
         if self.time_budget is not None:
             time_per_move = remaining_time / max(1, len(state.actions))
-            if time_per_move > self.time_budget * 0.01:  # Arbitrary threshold
+            if time_per_move > self.time_budget * 0.009:  # Arbitrary threshold
                 self.max_depth = min(3, self.initial_max_depth + 1)  # Increase depth
             else:
                 self.max_depth = self.initial_max_depth
@@ -69,8 +68,8 @@ class AI(Agent):
         # Consider decreasing depth if very few moves are left to make
         if remaining_time < self.time_budget * 0.05:  # If less than 5% of time is left
             self.max_depth = max(2, self.max_depth - 1)  # Decrease depth
-        #print("depth = ", self.max_depth)
-    
+
+        #print("depth = ", self.max_depth) 
 
     def is_cutoff(self, state, depth):
         """Determines if the search should be cut off at the current depth.
@@ -83,8 +82,6 @@ class AI(Agent):
             bool: True if the search should be cut off, False otherwise.
         """
         return (depth >= self.max_depth) or (self.game.is_terminal(state))
-
-    
 
     def alpha_beta_search(self, state):
         global totalTimeSorting
@@ -103,12 +100,12 @@ class AI(Agent):
         #print("Total time elapsed to compute alpha beta search = ", end - start)
         #print("Total time elapsed = ", totalTimeSorting)
         #print("Total time evaluating = ", totalTimeEvaluating)
+        #print("Time taken for agent: ", end - start)
+
         return action
     
     def compute_length(self,state):
-        return [len(state.board[0][0]), len(state.board[0][1]), len(state.board[1][0]), len(state.board[1][1]), len(state.board[2][0]), len(state.board[2][1]), len(state.board[3][0]), len(state.board[3][1])]
-
-    
+        return [len(state.board[0][0]), len(state.board[0][1]), len(state.board[1][0]), len(state.board[1][1]), len(state.board[2][0]), len(state.board[2][1]), len(state.board[3][0]), len(state.board[3][1])]  
 
     def pushing_Test(self, move, longueurs, state):
         listPlayer = [element for i, element in enumerate(longueurs) if i % 2 == state.to_move]  # indices pairs
@@ -131,8 +128,6 @@ class AI(Agent):
                 
         return score
 
-
-
     def order_moves_based_on_eval(self, state, isReverse):
         longueurs  = self.compute_length(state)
         myScores = np.array([self.pushing_Test(action,longueurs,state) for action in state.actions])
@@ -145,8 +140,6 @@ class AI(Agent):
 
         return ordered_moves
 
-
-    
     def shallow_eval(self, state):
         """Shallow evaluation function for move ordering."""
         # min_pieces_player = 4
@@ -171,8 +164,6 @@ class AI(Agent):
         return score
         #return float(5*min_pieces_player - min_pieces_opponent)**3
 
-    
-
     def max_value(self, state, alpha, beta, depth):
         global totalTimeSorting
         """Computes the maximum achievable value for the current player at a given state using the alpha-beta pruning.
@@ -191,7 +182,7 @@ class AI(Agent):
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
         if (self.is_cutoff(state, depth)) :
-            return (self.eval(state), None)
+            return (self.eval_enhanced(state), None)
         
         best_value = -float("inf")
         best_action = None
@@ -209,7 +200,6 @@ class AI(Agent):
                 return (best_value, best_action)
         return (best_value, best_action)
             
-
     def min_value(self, state, alpha, beta, depth):
         global totalTimeSorting
         """Computes the minimum achievable value for the opposing player at a given state using the alpha-beta pruning.
@@ -229,7 +219,7 @@ class AI(Agent):
                 If the state is a terminal state or the depth limit is reached, the action will be None.
         """
         if (self.is_cutoff(state, depth)) :
-            return (self.eval(state), None)
+            return (self.eval_enhanced(state), None)
   
         best_value = float("inf")
         best_action = None
@@ -245,7 +235,6 @@ class AI(Agent):
             if best_value <= alpha:
                 return (best_value, best_action)
         return (best_value, best_action)
-
 
     def numberOfPiece (self, state):
         """The score returned is the difference between the minimal number of pieces of the player among all 
@@ -279,8 +268,7 @@ class AI(Agent):
         """Evaluates the player's control over strategic board positions.
         """
         control_score = 0.0
-        # Central positions are more strategic
-        central_positions = [5, 6, 9, 10]
+        central_positions = [5, 6, 9, 10] # Central positions are more strategic
         for board_id in range(4):
             board = state.board[board_id]
             player_positions = board[self.player]
@@ -293,8 +281,6 @@ class AI(Agent):
         """
 
         board = state.board
-        elimitingAttacks = 0
-        pushingAttacks = 0
         threatenedPiecesOpponent = [[] for i in range(4)]
         max_pieces_threatened = 0
         tot_pieces_threatened = 0
@@ -306,20 +292,11 @@ class AI(Agent):
             opponent = (self.player + 1) % 2
             opponent_active_stones = board[active_board_id][opponent]
 
-            pushing = False
-            opponent_active_stone = -1
             for l in range(1, length+1):
                 if active_stone_id + l*direction in opponent_active_stones:
-                    pushing = True
-                    pushingAttacks += 1
-                    break
-
-            if pushing:
-                new_opponent_active_stone = active_stone_id + (length+1) * direction
-                if new_opponent_active_stone < 0 or new_opponent_active_stone > 15 or abs((active_stone_id + length * direction)%4 - (new_opponent_active_stone)%4) > 1:
-                    elimitingAttacks += 1
-                    pushingAttacks -= 1
-                    threatenedPiecesOpponent[active_board_id].append(active_stone_id+l*direction)
+                    new_opponent_active_stone = active_stone_id + (length+1) * direction
+                    if new_opponent_active_stone < 0 or new_opponent_active_stone > 15 or abs((active_stone_id + length * direction)%4 - (new_opponent_active_stone)%4) > 1:
+                        threatenedPiecesOpponent[active_board_id].append(active_stone_id+l*direction)
 
         for i in range(4):
             max_pieces_threatened = max(max_pieces_threatened, len(threatenedPiecesOpponent[i]))
@@ -333,8 +310,6 @@ class AI(Agent):
         """
 
         board = state.board
-        elimitingAttacks = 0
-        pushingAttacks = 0
         threatenedPiecesPlayer = [[] for i in range(4)]
         max_pieces_threatened = 0
         tot_pieces_threatened = 0
@@ -347,23 +322,14 @@ class AI(Agent):
         for action in actions:
         
             passive_board_id, passive_stone_id, active_board_id, active_stone_id, direction, length = action
-            
             player_active_stones = board[active_board_id][player]
 
-            pushing = False
-            player_active_stone = -1
+
             for l in range(1, length+1):
                 if active_stone_id + l*direction in player_active_stones:
-                    pushing = True
-                    pushingAttacks += 1
-                    break
-
-            if pushing:
-                new_player_active_stone = active_stone_id + (length+1) * direction
-                if new_player_active_stone < 0 or new_player_active_stone > 15 or abs((active_stone_id + length * direction)%4 - (new_player_active_stone)%4) > 1:
-                    elimitingAttacks += 1
-                    pushingAttacks -= 1
-                    threatenedPiecesPlayer[active_board_id].append(active_stone_id+l*direction)
+                    new_player_active_stone = active_stone_id + (length+1) * direction
+                    if new_player_active_stone < 0 or new_player_active_stone > 15 or abs((active_stone_id + length * direction)%4 - (new_player_active_stone)%4) > 1:
+                        threatenedPiecesPlayer[active_board_id].append(active_stone_id+l*direction)
 
         for i in range(4):
             max_pieces_threatened = max(max_pieces_threatened, len(threatenedPiecesPlayer[i]))
@@ -371,6 +337,117 @@ class AI(Agent):
         
         return max_pieces_threatened, tot_pieces_threatened
 
+    def eval_enhanced_defense(self, state):
+        board = state.board
+        player = self.player
+        opponent = (self.player + 1) % 2
+
+        #Pieces Advantage
+        min_pieces_player = 4
+
+        #Opponent mobility
+        actions = self.game.compute_actions(board, opponent)
+        actions_opponent = len(actions)
+
+        #Potential Attacks Against Me
+        threatenedPiecesPlayer = [[] for i in range(4)]
+        max_pieces_threatened = 0
+        tot_pieces_threatened = 0
+
+        for action in actions:
+        
+            passive_board_id, passive_stone_id, active_board_id, active_stone_id, direction, length = action
+            player_active_stones = board[active_board_id][player]
+
+
+            for l in range(1, length+1):
+                if active_stone_id + l*direction in player_active_stones:
+                    new_player_active_stone = active_stone_id + (length+1) * direction
+                    if new_player_active_stone < 0 or new_player_active_stone > 15 or abs((active_stone_id + length * direction)%4 - (new_player_active_stone)%4) > 1:
+                        threatenedPiecesPlayer[active_board_id].append(active_stone_id+l*direction)
+
+        for i in range(4):
+            #Pieces Advantage
+            min_pieces_player = min(min_pieces_player, len(state.board[i][self.player]))
+
+            #Potential Attacks Against Me
+            max_pieces_threatened = max(max_pieces_threatened, len(threatenedPiecesPlayer[i]))
+            tot_pieces_threatened += len(threatenedPiecesPlayer[i])
+        
+        return min_pieces_player, actions_opponent, max_pieces_threatened, tot_pieces_threatened
+
+    def eval_enhanced_attack(self, state):
+        board = state.board
+        player = self.player
+        opponent = (self.player + 1) % 2
+
+        #Pieces Advantage
+        min_pieces_opponent = 4
+
+        #Player mobility
+        actions = self.game.compute_actions(board, player)
+        actions_player = len(actions)
+
+        #Board Control
+        control_score = 0.0
+        central_positions = [5, 6, 9, 10] # Central positions are more strategic
+
+        #Potential Attacks To Opponent
+        threatenedPiecesOpponent = [[] for i in range(4)]
+        max_pieces_threatened = 0
+        tot_pieces_threatened = 0
+
+        for action in actions:
+        
+            passive_board_id, passive_stone_id, active_board_id, active_stone_id, direction, length = action
+            opponent_active_stones = board[active_board_id][opponent]
+
+            for l in range(1, length+1):
+                if active_stone_id + l*direction in opponent_active_stones:
+                    new_opponent_active_stone = active_stone_id + (length+1) * direction
+                    if new_opponent_active_stone < 0 or new_opponent_active_stone > 15 or abs((active_stone_id + length * direction)%4 - (new_opponent_active_stone)%4) > 1:
+                        threatenedPiecesOpponent[active_board_id].append(active_stone_id+l*direction)
+
+        for i in range(4):
+            #Pieces Advantage
+            min_pieces_opponent = min(min_pieces_opponent, len(state.board[i][(self.player + 1) % 2]))
+
+            #Potential Attacks To Opponent
+            max_pieces_threatened = max(max_pieces_threatened, len(threatenedPiecesOpponent[i]))
+            tot_pieces_threatened += len(threatenedPiecesOpponent[i])
+
+            #Board Control
+            player_positions = board[i][player]
+            control_score += sum(1 for pos in central_positions if pos in player_positions)
+            
+        
+        return min_pieces_opponent, actions_player, control_score, max_pieces_threatened, tot_pieces_threatened
+
+    def eval_enhanced(self, state):
+        piecesOpponent, actions_player, control_score, piecesOpponentThreatened, totPiecesOpponentThreatened = self.eval_enhanced_attack(state)
+        piecesPlayer, actions_opponent, piecesPlayerThreatened, totPiecesPlayerThreatened = self.eval_enhanced_defense(state)
+
+        if(piecesOpponent == 1):
+            if(piecesPlayer > 1):
+                attack = 10
+            else:
+                attack = 3
+        elif (piecesOpponent == 2):
+            if(piecesPlayer > 2):
+                attack = 5
+            else:
+                attack = 2
+        else :
+            attack = 1
+
+        if(piecesPlayer < 3):
+            defense = 5
+        else :
+            defense = 1
+
+
+        return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*(actions_player-actions_opponent) + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesOpponentThreatened - piecesPlayerThreatened)
+        
     def eval(self, state):
         """Evaluates the given state and returns a score from the perspective of the agent's player.
         Args:
@@ -408,6 +485,3 @@ class AI(Agent):
         return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*mobilityAdvantage + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesOpponentThreatened - piecesOpponentThreatened)
         #return 20*attack*(tot_pieces_player*piecesPlayer - tot_pieces_opponent*piecesOpponent) + 4*(tot_pieces_player*totPiecesOpponentThreatened - tot_pieces_opponent*totPiecesPlayerThreatened) + 0.05*mobilityAdvantage
   
-
-
-    

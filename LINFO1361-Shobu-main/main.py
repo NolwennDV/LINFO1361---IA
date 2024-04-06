@@ -77,7 +77,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                         action = agent_black.play(state)
                     if play_time is not None:
                         remaining_time_1 -= time.perf_counter() - t0
-                    print("action = "+ str(action) + "delay_time = " + str(time.perf_counter() - t0))
+                    #print("action = "+ str(action) + "delay_time = " + str(time.perf_counter() - t0))
                 else:
                     raise Exception(f"Invalid player: {state.to_move}")
                 
