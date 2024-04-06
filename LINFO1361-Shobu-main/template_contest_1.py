@@ -64,7 +64,10 @@ class AI(Agent):
         Returns:
             ShobuAction: The best action as determined by the alpha-beta algorithm.
         """
+        start = time.time()
         _, action = self.max_value(state, -float("inf"), float("inf"), 0)
+        end = time.time()
+        print("Time taken for agent1: ", end - start)
         
         return action
 
