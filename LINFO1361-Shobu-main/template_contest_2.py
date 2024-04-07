@@ -69,7 +69,7 @@ class AI(Agent):
         # Consider decreasing depth if very few moves are left to make
         if remaining_time < self.time_budget * 0.05:  # If less than 5% of time is left
             self.max_depth = max(2, self.max_depth - 1)  # Decrease depth
-        #print("depth = ", self.max_depth)
+        print("OLDdepth = ", self.max_depth)
     
 
     def is_cutoff(self, state, depth):
