@@ -6,6 +6,7 @@ import numpy as np
 
 totalTimeSorting = 0
 totalTimeEvaluating = 0
+MAX_DEPTH_LIMIT = 5
 
 class AI(Agent):
     """An agent that plays following your algorithm.
@@ -28,6 +29,7 @@ class AI(Agent):
         self.max_depth = 3
         self.initial_max_depth = 2
         self.time_budget = None
+        self.lastTime = 1.9
 
     def play(self, state, remaining_time):
         """Determines the best action by applying the alpha-beta pruning algorithm.
@@ -50,29 +52,34 @@ class AI(Agent):
         start = time.time()
         search = self.alpha_beta_search(state)
         end = time.time()
-        print("Total time elapsed to compute next action (agent2) = ", end - start)
+        self.lastTime = end - start
+        print("Total time elapsed to compute next action (agentMain) = ", end - start)
         return search
    
     def adjust_search_depth(self, remaining_time, state):
-
         if self.time_budget is not None:
+            # Calculer le temps moyen par mouvement
             time_per_move = remaining_time / max(1, len(state.actions))
-            if time_per_move > self.time_budget * 0.009:  # Arbitrary threshold
-                self.max_depth = min(3, self.initial_max_depth + 1)  # Increase depth
-            else:
-                self.max_depth = self.initial_max_depth
 
-        # Adjust based on game phase or complexity (optional)
-        # For instance, if fewer pieces are on the board, you might want to increase depth
-        pieces_count = sum(len(board[player]) for board in state.board for player in range(2))
-        if pieces_count < 12:  # Arbitrary example threshold
-            self.max_depth = min(3, self.initial_max_depth + 1)
+            # Si le temps par mouvement est supérieur à un seuil arbitraire
+            piecesPlayer, _, totPiecesPlayer, totPiecesOpponent = self.numberOfPiece(state)
+            totPieces = totPiecesPlayer + totPiecesOpponent
+            print("total pieces = ", totPieces)
+            if ((time_per_move > self.time_budget * 0.009 and self.lastTime < 2) or (piecesPlayer < 3 and time_per_move > self.time_budget * 0.005 and self.lastTime < 4)):
+                # Augmenter la profondeur si la profondeur maximale n'a pas encore été atteinte
+                if self.max_depth < MAX_DEPTH_LIMIT:  # Définir MAX_DEPTH_LIMIT en fonction de vos besoins
+                    if((self.max_depth == MAX_DEPTH_LIMIT-2 and totPieces < 22) or (self.max_depth == MAX_DEPTH_LIMIT-1 and totPieces < 16)):
+                        self.max_depth += 1
+                    elif(self.max_depth < MAX_DEPTH_LIMIT -2):
+                        self.max_depth += 1
+            elif (((time_per_move < self.time_budget * 0.005 or self.lastTime > 15)) and self.max_depth > self.initial_max_depth):
+                # Si le temps par mouvement est inférieur au seuil, revenir à la profondeur initiale
+                self.max_depth = self.max_depth-1
+        # Autres ajustements basés sur la phase de jeu ou la complexité (facultatif)
+        # Vous pouvez ajouter d'autres conditions pour ajuster la profondeur en fonction de certains critères
 
-        # Consider decreasing depth if very few moves are left to make
-        if remaining_time < self.time_budget * 0.05:  # If less than 5% of time is left
-            self.max_depth = max(2, self.max_depth - 1)  # Decrease depth
+        print("mainDepth = ", self.max_depth)
 
-        print("depth = ", self.max_depth) 
 
     def is_cutoff(self, state, depth):
         """Determines if the search should be cut off at the current depth.
@@ -117,6 +124,21 @@ class AI(Agent):
         score = 0
         central_positions = [5, 6, 9, 10]
         totalPieces = sum(listPlayer)+sum(listOpponent)
+        piecesOpponent = min(listOpponent)
+        piecesPlayer = min(listPlayer)
+
+
+        if(piecesOpponent == 1  and totalPieces < 18):
+            attack = 10
+        else :
+            attack = 1
+
+        if(piecesPlayer < 2):
+            defense = 20
+        else :
+            defense = 1
+
+
         startOfGameWeight = 1
         if(totalPieces >30):
             startOfGameWeight = 10
@@ -127,7 +149,7 @@ class AI(Agent):
             if new_opponent_active_stone < 0 or new_opponent_active_stone > 15 or abs((move.active_stone_id + move.length * move.direction)%4 - (new_opponent_active_stone)%4) > 1:
                 #score+=3
                 listOpponent[move.active_board_id] -= 1
-                score+= (min(listPlayer) - min(listOpponent))*5
+                score+= (defense*20*piecesPlayer - 1*attack*piecesPlayer - 4* sum(listOpponent)/attack)**3
                 
         return score
 
@@ -251,9 +273,9 @@ class AI(Agent):
 
         for i in range(4):
             min_pieces_player = min(min_pieces_player, len(state.board[i][self.player]))
-            tot_pieces_player = len(state.board[i][self.player])
+            tot_pieces_player += len(state.board[i][self.player])
             min_pieces_opponent = min(min_pieces_opponent, len(state.board[i][(self.player + 1) % 2]))
-            tot_pieces_opponent = len(state.board[i][(self.player + 1) % 2])
+            tot_pieces_opponent += len(state.board[i][(self.player + 1) % 2])
 
         return min_pieces_player, min_pieces_opponent, tot_pieces_player, tot_pieces_opponent
 
@@ -381,6 +403,7 @@ class AI(Agent):
         return min_pieces_player, actions_opponent, max_pieces_threatened, tot_pieces_threatened
 
     def eval_enhanced_attack(self, state):
+        
         board = state.board
         if(state.to_move == self.player):
             isPlayer = 1
@@ -391,6 +414,8 @@ class AI(Agent):
         opponent = (state.to_move + 1) % 2
 
         #Pieces Advantage
+        totPiecesOpponent  = 0
+        totPiecesPlayer = 0
         piecesOpponent = 4
         piecesPlayer = 4
 
@@ -423,6 +448,9 @@ class AI(Agent):
             #Pieces Advantage
             piecesOpponent = min(piecesOpponent, len(state.board[i][(player + 1) % 2]))
             piecesPlayer = min(piecesPlayer, len(state.board[i][player]))
+
+            totPiecesOpponent += len(state.board[i][(player + 1) % 2])
+            totPiecesPlayer += len(state.board[i][player])
             
 
 
@@ -436,10 +464,10 @@ class AI(Agent):
             control_score += sum(1 for pos in central_positions if pos in player_positions)
             
         
-        return piecesOpponent, piecesPlayer , actions_player, control_score, max_pieces_threatened, tot_pieces_threatened
+        return piecesOpponent, piecesPlayer , actions_player, control_score, max_pieces_threatened, tot_pieces_threatened, totPiecesOpponent, totPiecesPlayer
 
     def eval_enhanced(self, state):
-        pieces1, pieces2, actions_player, control_score, piecesOpponentThreatened, totPiecesOpponentThreatened = self.eval_enhanced_attack(state)
+        pieces1, pieces2, actions_player, control_score, piecesOpponentThreatened, totPiecesOpponentThreatened, totPiecesOpponent, totPiecesPlayer = self.eval_enhanced_attack(state)
         #piecesPlayer, actions_opponent, piecesPlayerThreatened, totPiecesPlayerThreatened = self.eval_enhanced_defense(state)
 
         if(state.to_move == self.player):
@@ -449,21 +477,13 @@ class AI(Agent):
             piecesPlayer = pieces1
             piecesOpponent = pieces2
 
-        if(piecesOpponent == 1):
-            if(piecesPlayer > 1):
-                attack = 10
-            else:
-                attack = 3
-        elif (piecesOpponent == 2):
-            if(piecesPlayer > 2):
-                attack = 5
-            else:
-                attack = 2
+        if(piecesOpponent == 1  and totPiecesOpponent+totPiecesPlayer < 20):
+            attack = 20
         else :
             attack = 1
 
-        if(piecesPlayer < 3):
-            defense = 5
+        if(piecesPlayer < 2):
+            defense = 20
         else :
             defense = 1
 
@@ -471,7 +491,7 @@ class AI(Agent):
 
 
         #return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*(actions_player-actions_opponent) + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesOpponentThreatened - piecesPlayerThreatened)
-        return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*(actions_player) + 4*(totPiecesOpponentThreatened ) + 1*control_score + 0.1*(piecesOpponentThreatened)
+        return (10*defense*piecesPlayer - 1*attack*piecesOpponent - 4*totPiecesOpponent/attack)**3 + 0.05*(actions_player) + 5*(totPiecesOpponentThreatened ) + 1*control_score + 0.5*(piecesOpponentThreatened)
         
     def eval(self, state):
         """Evaluates the given state and returns a score from the perspective of the agent's player.
@@ -493,6 +513,7 @@ class AI(Agent):
                 attack = 10
             else:
                 attack = 3
+                
         elif (piecesOpponent == 2):
             if(piecesPlayer > 2):
                 attack = 5

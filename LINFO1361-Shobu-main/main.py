@@ -50,7 +50,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
     if display:
         init_pygame()
     
-    debunker = AI1(1, ShobuGame())
+    #debunker = AI1(1, ShobuGame())
 
     remaining_time_0 = play_time
     remaining_time_1 = play_time
@@ -71,7 +71,7 @@ def main(agent_white, agent_black, display=False, log_file=None, play_time=600):
                         remaining_time_0 -= time.perf_counter() - t0
                 elif game.to_move(state) == 1:
                     t0 = time.perf_counter()
-                    debunker.play(state, remaining_time_1)
+                    #debunker.play(state, remaining_time_1)
                     action = agent_black.play(state, remaining_time_1)
                     while action == -2:
                         action = agent_black.play(state)
