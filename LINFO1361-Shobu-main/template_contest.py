@@ -6,7 +6,7 @@ import numpy as np
 
 totalTimeSorting = 0
 totalTimeEvaluating = 0
-MAX_DEPTH_LIMIT = 5
+MAX_DEPTH_LIMIT = 6
 
 class AI(Agent):
     """An agent that plays following your algorithm.
@@ -48,12 +48,12 @@ class AI(Agent):
             self.time_budget = remaining_time
         start_search_depth = time.time()
         self.adjust_search_depth(remaining_time, state)
-        #print("time to perform depth adjustment = ", time.time() - start_search_depth)
+        ##print("time to perform depth adjustment = ", time.time() - start_search_depth)
         start = time.time()
         search = self.alpha_beta_search(state)
         end = time.time()
         self.lastTime = end - start
-        print("Total time elapsed to compute next action (agentMain) = ", end - start)
+        #print("Total time elapsed to compute next action (agentMain) = ", end - start)
         return search
    
     def adjust_search_depth(self, remaining_time, state):
@@ -64,13 +64,13 @@ class AI(Agent):
             # Si le temps par mouvement est supérieur à un seuil arbitraire
             piecesPlayer, _, totPiecesPlayer, totPiecesOpponent = self.numberOfPiece(state)
             totPieces = totPiecesPlayer + totPiecesOpponent
-            print("total pieces = ", totPieces)
+            #print("total pieces = ", totPieces)
             if ((time_per_move > self.time_budget * 0.009 and self.lastTime < 2) or (piecesPlayer < 3 and time_per_move > self.time_budget * 0.005 and self.lastTime < 4)):
                 # Augmenter la profondeur si la profondeur maximale n'a pas encore été atteinte
                 if self.max_depth < MAX_DEPTH_LIMIT:  # Définir MAX_DEPTH_LIMIT en fonction de vos besoins
-                    if((self.max_depth == MAX_DEPTH_LIMIT-2 and totPieces < 22) or (self.max_depth == MAX_DEPTH_LIMIT-1 and totPieces < 16)):
+                    if((self.max_depth == MAX_DEPTH_LIMIT-3 and totPieces < 22) or (self.max_depth == MAX_DEPTH_LIMIT-2 and totPieces < 16) or (self.max_depth == MAX_DEPTH_LIMIT-1 and totPieces < 14) or (self.max_depth == MAX_DEPTH_LIMIT and totPieces < 8)):
                         self.max_depth += 1
-                    elif(self.max_depth < MAX_DEPTH_LIMIT -2):
+                    elif(self.max_depth < MAX_DEPTH_LIMIT -3):
                         self.max_depth += 1
             elif (((time_per_move < self.time_budget * 0.005 or self.lastTime > 15)) and self.max_depth > self.initial_max_depth):
                 # Si le temps par mouvement est inférieur au seuil, revenir à la profondeur initiale
@@ -78,7 +78,7 @@ class AI(Agent):
         # Autres ajustements basés sur la phase de jeu ou la complexité (facultatif)
         # Vous pouvez ajouter d'autres conditions pour ajuster la profondeur en fonction de certains critères
 
-        print("mainDepth = ", self.max_depth)
+        #print("mainDepth = ", self.max_depth)
 
 
     def is_cutoff(self, state, depth):
@@ -107,10 +107,10 @@ class AI(Agent):
         start = time.time()
         _, action = self.max_value(state, -float("inf"), float("inf"), 0)
         end = time.time()
-        print("Total time elapsed to compute alpha beta search = ", end - start)
-        print("Total time elapsed to sort = ", totalTimeSorting)
-        #print("Total time evaluating = ", totalTimeEvaluating)
-        #print("Time taken for agent: ", end - start)
+        #print("Total time elapsed to compute alpha beta search = ", end - start)
+        #print("Total time elapsed to sort = ", totalTimeSorting)
+        ##print("Total time evaluating = ", totalTimeEvaluating)
+        ##print("Time taken for agent: ", end - start)
 
         return action
     
@@ -128,12 +128,12 @@ class AI(Agent):
         piecesPlayer = min(listPlayer)
 
 
-        if(piecesOpponent == 1  and totalPieces < 18):
-            attack = 10
+        if(piecesOpponent == 1  and totalPieces < 20):
+            attack = 25
         else :
             attack = 1
 
-        if(piecesPlayer < 2):
+        if(piecesPlayer < 3):
             defense = 20
         else :
             defense = 1
@@ -149,8 +149,11 @@ class AI(Agent):
             if new_opponent_active_stone < 0 or new_opponent_active_stone > 15 or abs((move.active_stone_id + move.length * move.direction)%4 - (new_opponent_active_stone)%4) > 1:
                 #score+=3
                 listOpponent[move.active_board_id] -= 1
-                score+= (defense*20*piecesPlayer - 1*attack*piecesPlayer - 4* sum(listOpponent)/attack)**3
-                
+                score+= (defense*10*piecesPlayer - 1*attack*piecesPlayer - 4* sum(listOpponent)/attack)**3
+        if(piecesOpponent == 0):
+            score +=100000
+        if(piecesPlayer == 0):
+            score -=100000
         return score
 
     def order_moves_based_on_eval(self, state, isReverse):
@@ -469,7 +472,7 @@ class AI(Agent):
     def eval_enhanced(self, state):
         pieces1, pieces2, actions_player, control_score, piecesOpponentThreatened, totPiecesOpponentThreatened, totPiecesOpponent, totPiecesPlayer = self.eval_enhanced_attack(state)
         #piecesPlayer, actions_opponent, piecesPlayerThreatened, totPiecesPlayerThreatened = self.eval_enhanced_defense(state)
-
+    
         if(state.to_move == self.player):
             piecesPlayer = pieces2
             piecesOpponent = pieces1
@@ -478,16 +481,19 @@ class AI(Agent):
             piecesOpponent = pieces2
 
         if(piecesOpponent == 1  and totPiecesOpponent+totPiecesPlayer < 20):
-            attack = 20
+            attack = 25
         else :
             attack = 1
 
-        if(piecesPlayer < 2):
+        if(piecesPlayer < 3):
             defense = 20
         else :
             defense = 1
 
-        
+        if(piecesOpponent == 0):
+            return 100000000
+        if(piecesPlayer == 0):
+            return -100000000
 
 
         #return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*(actions_player-actions_opponent) + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesOpponentThreatened - piecesPlayerThreatened)
