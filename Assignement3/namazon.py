@@ -38,23 +38,28 @@ class NAmazonsProblem(Problem):
 
     def actions(self, state):
         actions = []
+        print("amazons : ", state.amazons)
         col = state.amazons.index(-1)
+        print("col: " + str(col))
         
         for row in range(state.n):
             if self.is_safe(row, col, state.amazons, state.n):
                 actions.append(row)
 
+        print("actions :", actions)
         return actions
 
     def result(self, state, row):
         
+        print("amazons : ", state.amazons)
         column = state.amazons.index(-1)
+        print("col: " + str(column))
 
-        new_amazons = state.amazons
+        new_amazons = state.amazons[:]
         new_amazons[column] = row
 
         new_grid = [row[:] for row in state.grid]
-        new_grid[column][row] = "A"
+        new_grid[row][column] = "A"
 
         if (state.nMoves == "Init"):
             new_nMoves = 1
@@ -62,10 +67,11 @@ class NAmazonsProblem(Problem):
             new_nMoves = state.nMoves + 1
 
         new_state = State(state.n, new_grid, new_amazons, new_nMoves)
-
+        print("end")
         return new_state
 
     def goal_test(self, state):
+        print(state.amazons.count(-1))
         return state.amazons.count(-1) == 0
 
     def h(self, node):
@@ -114,7 +120,7 @@ problem = NAmazonsProblem(int(sys.argv[1]))
 
 start_timer = time.perf_counter()
 
-node = astar_search(problem, display=True)
+node = breadth_first_tree_search(problem)
 
 end_timer = time.perf_counter()
 
