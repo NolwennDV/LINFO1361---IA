@@ -13,21 +13,98 @@ class NAmazonsProblem(Problem):
     filled in yet. We fill in columns left to right.
     """
     def __init__(self, N):
-        pass
+        self.initial = State(N)
+
+    def is_safe(self, row, col, amazons, n):
+        # Check for Queen's moves: rows, columns, and diagonals
+        for c in range(col):
+            r = amazons[c]
+            if r != -1:  # There's an Amazon in this column
+                if r == row or abs(r - row) == abs(c - col):
+                    return False
+
+        # Check for extended Knight's moves
+        knight_moves = [(4, 1), (4, -1), (-4, 1), (-4, -1),
+                        (1, 4), (1, -4), (-1, 4), (-1, -4),
+                        (3, 2), (3, -2), (-3, 2), (-3, -2),
+                        (2, 3), (2, -3), (-2, 3), (-2, -3)]
+        for dr, dc in knight_moves:
+            knight_row, knight_col = row + dr, col + dc
+            if 0 <= knight_row < n and 0 <= knight_col < col:  # Check within bounds and before the current column
+                if amazons[knight_col] == knight_row:
+                    return False
+
+        return True
 
     def actions(self, state):
-        pass
+        actions = []
+        col = state.amazons.index(-1)
+        
+        for row in range(state.n):
+            if self.is_safe(row, col, state.amazons, state.n):
+                actions.append(row)
+
+        return actions
 
     def result(self, state, row):
-        pass
+        
+        column = state.amazons.index(-1)
+
+        new_amazons = state.amazons
+        new_amazons[column] = row
+
+        new_grid = [row[:] for row in state.grid]
+        new_grid[column][row] = "A"
+
+        if (state.nMoves == "Init"):
+            new_nMoves = 1
+        else :
+            new_nMoves = state.nMoves + 1
+
+        new_state = State(state.n, new_grid, new_amazons, new_nMoves)
+
+        return new_state
 
     def goal_test(self, state):
-        pass
+        return state.amazons.count(-1) == 0
 
     def h(self, node):
-        h = 0.0
+        h = node.state.amazons.count(-1)
 
-        return h    
+        return h   
+
+#################
+# class State #
+################# 
+class State:
+
+    def __init__(self, n, grid=None, amazons=None, nMoves="Init"):
+        self.n = n
+        if (grid == None):
+            self.grid = [["#" for _ in range(n)] for _ in range(n)] 
+        else :
+            self.grid = grid
+        if (amazons == None):
+            self.amazons = [-1 for _ in range(n)]
+        else :
+            self.amazons = amazons
+        self.nMoves = nMoves
+
+
+    def __str__(self):
+        s = ""
+        for line in self.grid:
+            s += "".join(line) + "\n"
+        return s
+
+    def __eq__(self, other):
+        return (isinstance(other, State) and self.grid == other.grid and self.amazons == other.amazons and self.nMoves == other.nMoves)
+
+    def __lt__(self, other):
+        return hash(self) < hash(other)
+
+    def __hash__(self):
+        return hash(str(self.nMoves))
 
 #####################
 # Launch the search #
@@ -37,7 +114,7 @@ problem = NAmazonsProblem(int(sys.argv[1]))
 
 start_timer = time.perf_counter()
 
-node = ... # TODO: Launch the search
+node = astar_search(problem, display=True)
 
 end_timer = time.perf_counter()
 
