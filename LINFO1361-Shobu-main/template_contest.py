@@ -48,12 +48,12 @@ class AI(Agent):
             self.time_budget = remaining_time
         start_search_depth = time.time()
         self.adjust_search_depth(remaining_time, state)
-        ##print("time to perform depth adjustment = ", time.time() - start_search_depth)
+        #print("time to perform depth adjustment = ", time.time() - start_search_depth)
         start = time.time()
         search = self.alpha_beta_search(state)
         end = time.time()
         self.lastTime = end - start
-        #print("Total time elapsed to compute next action (agentMain) = ", end - start)
+        print("Total time elapsed to compute next action (agentMain) = ", end - start)
         return search
    
     def adjust_search_depth(self, remaining_time, state):
@@ -64,7 +64,7 @@ class AI(Agent):
             # Si le temps par mouvement est supérieur à un seuil arbitraire
             piecesPlayer, _, totPiecesPlayer, totPiecesOpponent = self.numberOfPiece(state)
             totPieces = totPiecesPlayer + totPiecesOpponent
-            #print("total pieces = ", totPieces)
+            print("total pieces = ", totPieces)
             if ((time_per_move > self.time_budget * 0.009 and self.lastTime < 2) or (piecesPlayer < 3 and time_per_move > self.time_budget * 0.005 and self.lastTime < 4)):
                 # Augmenter la profondeur si la profondeur maximale n'a pas encore été atteinte
                 if self.max_depth < MAX_DEPTH_LIMIT:  # Définir MAX_DEPTH_LIMIT en fonction de vos besoins
@@ -78,7 +78,7 @@ class AI(Agent):
         # Autres ajustements basés sur la phase de jeu ou la complexité (facultatif)
         # Vous pouvez ajouter d'autres conditions pour ajuster la profondeur en fonction de certains critères
 
-        #print("mainDepth = ", self.max_depth)
+        print("mainDepth = ", self.max_depth)
 
 
     def is_cutoff(self, state, depth):
@@ -107,10 +107,10 @@ class AI(Agent):
         start = time.time()
         _, action = self.max_value(state, -float("inf"), float("inf"), 0)
         end = time.time()
-        #print("Total time elapsed to compute alpha beta search = ", end - start)
-        #print("Total time elapsed to sort = ", totalTimeSorting)
-        ##print("Total time evaluating = ", totalTimeEvaluating)
-        ##print("Time taken for agent: ", end - start)
+        print("Total time elapsed to compute alpha beta search = ", end - start)
+        print("Total time elapsed to sort = ", totalTimeSorting)
+        #print("Total time evaluating = ", totalTimeEvaluating)
+        #print("Time taken for agent: ", end - start)
 
         return action
     
@@ -153,7 +153,7 @@ class AI(Agent):
         if(piecesOpponent == 0):
             score +=100000
         if(piecesPlayer == 0):
-            score -=100000
+            score -=10000000000
         return score
 
     def order_moves_based_on_eval(self, state, isReverse):
@@ -491,13 +491,17 @@ class AI(Agent):
             defense = 1
 
         if(piecesOpponent == 0):
-            return 100000000
+            goWin =  100000000
+        else :
+            goWin = 0
         if(piecesPlayer == 0):
-            return -100000000
+            goLose =  -1000000000
+        else :
+            goLose = 0
 
 
         #return 20*defense*(5*piecesPlayer - piecesOpponent) + 0.05*(actions_player-actions_opponent) + 4*(totPiecesOpponentThreatened - defense*totPiecesPlayerThreatened) + 1*control_score + 0.1*(piecesOpponentThreatened - piecesPlayerThreatened)
-        return (10*defense*piecesPlayer - 1*attack*piecesOpponent - 4*totPiecesOpponent/attack)**3 + 0.05*(actions_player) + 5*(totPiecesOpponentThreatened ) + 1*control_score + 0.5*(piecesOpponentThreatened)
+        return (10*defense*piecesPlayer - 1*attack*piecesOpponent - 4*totPiecesOpponent/attack)**3 + 0.05*(actions_player) + 5*(totPiecesOpponentThreatened ) + 1*control_score + 0.5*(piecesOpponentThreatened) + goWin + goLose
         
     def eval(self, state):
         """Evaluates the given state and returns a score from the perspective of the agent's player.
