@@ -13,7 +13,8 @@ class NAmazonsProblem(Problem):
     filled in yet. We fill in columns left to right.
     """
     def __init__(self, N):
-        self.initial = State(N)
+        super().__init__(State(N))
+        self.N = N
 
     def is_safe(self, row, col, amazons, n):
         # Check for Queen's moves: rows, columns, and diagonals
@@ -36,24 +37,54 @@ class NAmazonsProblem(Problem):
 
         return True
 
+    def conflict(self, row1, col1, row2, col2, n):
+        """Would putting two queens in (row1, col1) and (row2, col2) conflict?"""
+        if (row1 == row2) :
+            return 1 # same row
+        if (col1 == col2) :
+            return 1 # same column
+        if (row1 - col1 == row2 - col2) :
+            return 1 # same \ diagonal
+        if (row1 + col1 == row2 + col2) :
+            return 1 # same / diagonal
+
+        # Check for extended Knight's moves
+        knight_moves = [(4, 1), (4, -1), (-4, 1), (-4, -1),
+                        (1, 4), (1, -4), (-1, 4), (-1, -4),
+                        (3, 2), (3, -2), (-3, 2), (-3, -2),
+                        (2, 3), (2, -3), (-2, 3), (-2, -3)]
+        for dr, dc in knight_moves:
+            knight_row, knight_col = row1 + dr, col1 + dc
+            if 0 <= knight_row < n and 0 <= knight_col < col1:  # Check within bounds and before the current column
+                if row2 == knight_row & col2 == knight_col:
+                    return 1
+
+        return 0
+
+    """
+    def actions(self, state):
+        #In the leftmost empty column, try all non-conflicting rows
+        if state.amazons[-1] != -1:
+            return []  # All columns filled; no successors
+        else:
+            col = state.amazons.index(-1)
+            return [row for row in range(self.N)
+                    if not self.conflicted(state, row, col)]
+    """
+
     def actions(self, state):
         actions = []
-        print("amazons : ", state.amazons)
         col = state.amazons.index(-1)
-        print("col: " + str(col))
         
         for row in range(state.n):
             if self.is_safe(row, col, state.amazons, state.n):
                 actions.append(row)
 
-        print("actions :", actions)
         return actions
 
     def result(self, state, row):
         
-        print("amazons : ", state.amazons)
         column = state.amazons.index(-1)
-        print("col: " + str(column))
 
         new_amazons = state.amazons[:]
         new_amazons[column] = row
@@ -67,17 +98,20 @@ class NAmazonsProblem(Problem):
             new_nMoves = state.nMoves + 1
 
         new_state = State(state.n, new_grid, new_amazons, new_nMoves)
-        print("end")
         return new_state
 
     def goal_test(self, state):
-        print(state.amazons.count(-1))
         return state.amazons.count(-1) == 0
 
     def h(self, node):
-        h = node.state.amazons.count(-1)
+        """Return number of conflicting queens for a given node"""
+        num_conflicts = 0
+        for (r1, c1) in enumerate(node.state.amazons):
+            for (r2, c2) in enumerate(node.state.amazons):
+                if (r1, c1) != (r2, c2):
+                    num_conflicts += self.conflict(r1, c1, r2, c2, node.state.n)
 
-        return h   
+        return num_conflicts   
 
 #################
 # class State #
@@ -90,7 +124,7 @@ class State:
             self.grid = [["#" for _ in range(n)] for _ in range(n)] 
         else :
             self.grid = grid
-        if (amazons == None):
+        if (amazons == None): # example : [1, 3, -1, -1]
             self.amazons = [-1 for _ in range(n)]
         else :
             self.amazons = amazons
@@ -100,8 +134,8 @@ class State:
     def __str__(self):
         s = ""
         for line in self.grid:
-            s += "".join(line) + "\n"
-        return s
+            s += "".join(line) + "\n" 
+        return s.rstrip("\n")
 
     def __eq__(self, other):
         return (isinstance(other, State) and self.grid == other.grid and self.amazons == other.amazons and self.nMoves == other.nMoves)
@@ -120,7 +154,7 @@ problem = NAmazonsProblem(int(sys.argv[1]))
 
 start_timer = time.perf_counter()
 
-node = breadth_first_tree_search(problem)
+node = astar_search(problem, display=True)
 
 end_timer = time.perf_counter()
 
@@ -136,4 +170,4 @@ for n in path:
 
     print()
     
-print("Time: ", end_timer - start_timer)
+#print("Time: ", end_timer - start_timer)
