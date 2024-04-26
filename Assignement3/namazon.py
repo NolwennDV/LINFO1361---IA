@@ -26,19 +26,19 @@ class NAmazonsProblem(Problem):
                     if not self.conflicted(state, row, col)]
 
     def result(self, state, row):
-        """Place the next queen at the given row."""
+        """Place the next amazon at the given row."""
         col = state.index(-1)
         new = list(state[:])
         new[col] = row
         return tuple(new)
 
     def conflicted(self, state, row, col):
-        """Would placing a queen at (row, col) conflict with anything?"""
+        """Would placing a amazon at (row, col) conflict with anything?"""
         return any(self.conflict(row, col, state[c], c)
                    for c in range(col))
 
     def conflict(self, row1, col1, row2, col2):
-        """Would putting two queens in (row1, col1) and (row2, col2) conflict?"""
+        """Would putting two amazons in (row1, col1) and (row2, col2) conflict?"""
         return (row1 == row2 or  # same row
                 col1 == col2 or  # same column
                 row1 - col1 == row2 - col2 or  # same \ diagonal
@@ -57,7 +57,7 @@ class NAmazonsProblem(Problem):
                        for col in range(len(state)))
 
     def h(self, node):
-        """Return number of conflicting queens for a given node"""
+        """Return number of conflicting amazon for a given node"""
         num_conflicts = 0
         for (r1, c1) in enumerate(node.state):
             for (r2, c2) in enumerate(node.state):
@@ -71,11 +71,8 @@ class NAmazonsProblem(Problem):
 #####################
 
 problem = NAmazonsProblem(int(sys.argv[1]))
-
 start_timer = time.perf_counter()
-
-node = astar_search(problem, display=False)
-
+node, nb_explored, remaining_nodes = depth_first_graph_search(problem)
 end_timer = time.perf_counter()
 
 
@@ -101,4 +98,6 @@ for n in path:
 
     i+=1
     
-#print("Time: ", end_timer - start_timer)
+print("* Execution time:\t", str(end_timer - start_timer))
+print("* #Nodes explored:\t", nb_explored)
+print('Number of moves: ', str(node.depth))
