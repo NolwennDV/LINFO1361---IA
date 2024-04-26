@@ -3,129 +3,113 @@ import time
 import math
 import sys
 
- 
-
-
-
 def objective_score(board):
-    #---|---|---#
-    #---|---|---#
-    #---|---|---#
-    #_____________
-    #---|---|---#
-    #---|---|---#
-    #---|---|---#
-    #_____________
-    #---|---|---#
-    #---|---|---#
-    #---|---|---#
-    sameNumberLine = 0
-    sameNumberColumn = 0
-    sameNumerSubBoard = 0
+    size = 9
+    sameNumberLine = [set() for _ in range(size)]
+    sameNumberColumn = [set() for _ in range(size)]
+    sameNumberSubBoard = [[set() for _ in range(size // 3)] for _ in range(size // 3)]
     nonFilled = 0
-    for i in range(9):
-        for j in range(9):
-            if(board[i][j] == 0):
+
+    errors = 0
+
+    for i in range(size):
+        for j in range(size):
+            num = board[i][j]
+            if num == 0:
                 nonFilled += 1
-            subBoardNumber1 = (i // 3) * 3 + (j // 3)
+            else:
+                block_row = i // 3
+                block_col = j // 3
 
-            for k in range(9):
-                subBoardNumer2 = (i // 3) * 3 + (k // 3)
-                if board[i][j] == board[i][k] and j != k and board[i][j] != 0: #0 is when not filled
-                    sameNumberLine += 1
-                if( board[j][i] == board[k][i] and j != k and board[j][i] != 0):
-                    sameNumberColumn += 1
-                if(subBoardNumber1 == subBoardNumer2 and board[i][j] == board[i][k] and j != k and board[i][j] != 0):
-                    sameNumerSubBoard += 1
-    return (sameNumberLine + sameNumberColumn + sameNumerSubBoard)//2 + nonFilled
+                if num in sameNumberLine[i]:
+                    errors += 1
+                else:
+                    sameNumberLine[i].add(num)
 
+                if num in sameNumberColumn[j]:
+                    errors += 1
+                else:
+                    sameNumberColumn[j].add(num)
+
+                if num in sameNumberSubBoard[block_row][block_col]:
+                    errors += 1
+                else:
+                    sameNumberSubBoard[block_row][block_col].add(num)
+
+    return errors + nonFilled
 
 def generateFixedList(board):
-    editionList = []
+    fixedList = []
     for i in range(9):
         for j in range(9):
             if board[i][j] != 0:
-                editionList.append((i,j))
-    return editionList
-
+                fixedList.append((i, j))
+    return fixedList
 
 def simulated_annealing_solver(initial_board):
 
     """Simulated annealing Sudoku solver."""
     initialAction = True
 
-    current_solution = [row[:] for row in initial_board]
+    neighbor = [row[:] for row in initial_board]
+    
+    #REMPLIR LA GRILLE DE DEPART
+    for i in range(9):
+        for j in range(9):
+            if neighbor[i][j] == 0:
+                nombre_innovant = 0
+                while(nombre_innovant == 0 or neighbor.count(nombre_innovant) >= 9): #On continue a itérer pour obtenir un random por le premier cas ou si le nombre est déja suffisemment de fois dans la grille
+                    nombre_innovant = random.randint(1,9)
+                neighbor[i][j] = nombre_innovant
+    
+    current_solution = neighbor
+
+
     best_solution = current_solution
     
     current_score = objective_score(current_solution)
     best_score = current_score
 
     temperature = 1.0
-    cooling_rate = 0.9999#...  #TODO: Adjust this parameter to control the cooling rate
-    neighbor = current_solution
+    cooling_rate = 0.999#...  #TODO: Adjust this parameter to control the cooling rate
     while temperature > 0.0001:
+        
 
         try:  
 
-            # TODO: Generate a neighbor (Don't forget to skip non-zeros tiles in the initial board ! It will be verified on Inginious.)
-            ...
-            if(initialAction):
-                initialAction = False
-                for i in range(9):
-                    for j in range(9):
-                        if neighbor[i][j] == 0:
-                            nombre_innovant = None
-                            while(nombre_innovant == None or nombre_innovant in neighbor[i]):
-                                nombre_innovant = random.randint(1,9)
-                            neighbor[i][j] = nombre_innovant
-            scorePerLine = [0,0,0,0,0,0,0,0,0] #List of numbers of duplicatas per line
-            duplicatas = [[],[],[],[],[],[],[],[],[]] #List of duplicatas for each line
-            scorePerColumn = [0,0,0,0,0,0,0,0,0] #List of numbers of duplicatas per line
-            for i in range(9):
-                for j in range(1,10,1):
-                    tempoCountLine = neighbor[i].count(j)
-                    tempoCountColumn = neighbor[:][i].count(j)
-                    if(tempoCountLine >1):
-                        scorePerLine[i] += neighbor[i].count(j)
-                        duplicatas[i].append(j)
-                    if(tempoCountColumn >1):
-                        scorePerColumn[i] += neighbor[:][i].count(j)
-            
-            # Get the indices of the three maximum values in scorePerLine
-            if(sum(scorePerLine) != 0):
-                max_indices_line = sorted(range(len(scorePerLine)), key=lambda k: scorePerLine[k], reverse=True)[:3]
-                for i in max_indices_line[0:2]:
-                    #for x in neighbor[i]:
-                    for j in range(9):
-                        if neighbor[i][j] not in duplicatas[i]:
-                            pass
-                        else :
-                            duplicatas[i].remove(neighbor[i][j])
-                            nombre_innovant = None
-                            while(nombre_innovant == None or nombre_innovant in neighbor[i]):
-                                nombre_innovant = random.randint(1,9)
-                            neighbor[i][j] = nombre_innovant
-            else:
-                max_indice_column = sorted(range(len(scorePerLine)), key=lambda k: scorePerLine[k], reverse=True)[0]
-                nombre_plus_represente = max(set(neighbor[:][max_indice_column]), key=neighbor[:][max_indice_column].count)
+            # Generate a neighbor
+            neighbor = [row[:] for row in current_solution]
 
-                # Obtenir les indices de l'élément le plus représenté dans la liste
-                indice_row = [i for i, x in enumerate(neighbor[:][max_indice_column]) if x == nombre_plus_represente][0] #indice de la ligne ou se trouve le numéro qui casse la colonne
-                #random.shuffle(neighbor[indices_row[0]])
-                nombre_innovant = None
-                while(nombre_innovant == None or nombre_innovant == indice_row):
-                    nombre_innovant = random.randint(0,8)
-                tempoValue = neighbor[indice_row][nombre_innovant]
-                neighbor[indice_row][nombre_innovant] = neighbor[indice_row][max_indice_column] #on échange le nombre avec une autre colonne aléatoire d'indice nombre innovant 
-                neighbor[indice_row][max_indice_column] = tempoValue
+            #Choisir nombre de case qu'on va modifier, on va d'abord en échanger de manière aléatoire et ensuite essayer de régler les conflits
+            numberOfChanges = max(int(temperature*current_score//3),1)
+            print("Number of changes:", numberOfChanges)
+            for i in range(numberOfChanges): #On fait des modifs aléatoires
+                i1, j1, i2, j2 = 0, 0, 0, 0
+                while(i1 == i2 and j1 == j2):
+                    i1, j1 = random.choice(editableList)
+                    i2, j2 = random.choice(editableList)
+                neighbor[i1][j1], neighbor[i2][j2] = neighbor[i2][j2], neighbor[i1][j1]
             
-                
+            #numberOfChanges = max(int(temperature*objective_score(neighbor)),1)
+            tries =  max(int(temperature*objective_score(neighbor)),1)  # Limit attempts to avoid infinite loop
+            print("Tries:", tries)
+            while tries > 0 and objective_score(neighbor) >= current_score:
+                i3, j3 = random.choice(editableList)
+                k = random.randint(1, 9)
+                temp = neighbor[i3][j3]
+                neighbor[i3][j3] = k
+                if objective_score(neighbor) < current_score:
+                    break
+                neighbor[i3][j3] = temp
+                tries -= 1
 
-            
-           
+
 
             # Evaluate the neighbor
             neighbor_score = objective_score(neighbor)
+            print_board(neighbor)
+            print("Value(C):", neighbor_score)
+            #time.sleep(1)
 
             # Calculate acceptance probability
             delta = float(current_score - neighbor_score)
@@ -178,6 +162,7 @@ if __name__ == "__main__":
     # Reading Sudoku from file
     initial_board = read_sudoku_from_file(sys.argv[1])
     fixedList = generateFixedList(initial_board)
+    editableList = [(i, j) for i in range(9) for j in range(9) if (i, j) not in fixedList]
 
     # Solving Sudoku using simulated annealing
     start_timer = time.perf_counter()
