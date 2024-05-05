@@ -225,14 +225,16 @@ def depth_first_graph_search(problem):
     frontier = [(Node(problem.initial))]  # Stack
 
     explored = set()
+    explored_nodes = 0
     while frontier:
         node = frontier.pop()
+        explored_nodes += 1
         if problem.goal_test(node.state):
-            return node
+            return node, explored_nodes, len(frontier)
         explored.add(node.state)
         frontier.extend(child for child in node.expand(problem)
                         if child.state not in explored and child not in frontier)
-    return None
+    return None, explored_nodes, len(frontier)
 
 
 def breadth_first_graph_search(problem):
@@ -245,19 +247,25 @@ def breadth_first_graph_search(problem):
     if problem.goal_test(node.state):
         return node
     frontier = deque([node])
-    explored = set()
+    explored = dict()
+    explored_nodes = 0
     while frontier:
         node = frontier.popleft()
-        explored.add(node.state)
+        if node.state in explored: 
+            continue
+        explored_nodes += 1
+        explored[node.state] = True
         for child in node.expand(problem):
-            if child.state not in explored and child not in frontier:
+            # if hash(child.state) in explored.keys():
+                # print("visited alredy")
+            if child.state not in explored:
                 if problem.goal_test(child.state):
-                    return child
+                    return child, explored_nodes, len(frontier)
                 frontier.append(child)
-    return None
+    return None, explored_nodes, len(frontier)
 
 
-def best_first_graph_search(problem, f, display=True):
+def best_first_graph_search(problem, f, display=False):
     """Search the nodes with the lowest f scores first.
     You specify the function f(node) that you want to minimize; for example,
     if f is a heuristic estimate to the goal, then we have greedy best
@@ -269,14 +277,16 @@ def best_first_graph_search(problem, f, display=True):
     node = Node(problem.initial)
     frontier = PriorityQueue('min', f)
     frontier.append(node)
-    
     explored = set()
+    explored_nodes = 0
+
     while frontier:
         node = frontier.pop()
+        explored_nodes += 1
         if problem.goal_test(node.state):
             if display:
                 print(len(explored), "paths have been expanded and", len(frontier), "paths remain in the frontier")
-            return node
+            return node, explored_nodes, len(frontier)
         explored.add(node.state)
         for child in node.expand(problem):
             if child.state not in explored and child not in frontier:
@@ -285,7 +295,7 @@ def best_first_graph_search(problem, f, display=True):
                 if f(child) < frontier[child]:
                     del frontier[child]
                     frontier.append(child)
-    return None
+    return None, explored_nodes, len(frontier)
 
 
 def uniform_cost_search(problem, display=False):
