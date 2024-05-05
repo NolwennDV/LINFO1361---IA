@@ -171,10 +171,27 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
     otherwise output[i][j] == 0
     """
 
-    # Create the variables here
+    # x[i] is the value (col j) at row i 
+    x = VarArray(size=size, dom=range(1, size + 1))
 
+    # Constraints
     satisfy(
-        # Write your constraints here
+        # Ensure all rows and columns contain unique amazons
+        AllDifferent(x),
+
+        # Diagonal constraints to avoid conflicts
+        [abs(x[i] - x[j]) != abs(i - j) for i in range(size) for j in range(i + 1, size)],
+
+        # Knight-like moves 3x2 and 2x3
+        [abs(x[i] - x[j]) != 3 for i in range(size) for j in range(i + 1, size) if abs(i - j) == 2],
+        [abs(x[i] - x[j]) != 2 for i in range(size) for j in range(i + 1, size) if abs(i - j) == 3],
+
+        # Knight-like moves 4x1 and 1x4
+        [abs(x[i] - x[j]) != 4 for i in range(size) for j in range(i + 1, size) if abs(i - j) == 1],
+        [abs(x[i] - x[j]) != 1 for i in range(size) for j in range(i + 1, size) if abs(i - j) == 4],
+
+        # Forced amazons at specific positions
+        [x[row - 1] == col for row, col in placed_amazons]
     )
 
     # output[i][j] == 1 iff there is an amazon at row i and column j
@@ -185,6 +202,8 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
     if solve(solver=CHOCO) is SAT:
         status = True
         # Fill the output grid with solution
+        for i in range(size):
+            output[i][x[i].value - 1] = 1
     else:
         status = False
 
