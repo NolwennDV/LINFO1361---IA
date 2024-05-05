@@ -192,7 +192,7 @@ def simulated_annealing_solver(initial_board):
             temperature *= cooling_rate
         except:
 
-            print("Break asked")
+            #print("Break asked")
             break
         
     return best_solution, best_score
@@ -233,4 +233,4 @@ if __name__ == "__main__":
     print_board(solved_board)
     print("\nValue(C):", current_score)
 
-    print("\nTime taken:", end_timer - start_timer, "seconds")
+    #print("\nTime taken:", end_timer - start_timer, "seconds")
