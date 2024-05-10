@@ -172,7 +172,7 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
     """
 
     # x[i] is the value (col j) at row i 
-    x = VarArray(size=size, dom=range(1, size + 1))
+    x = VarArray(size=size, dom=range(size))
 
     # Constraints
     satisfy(
@@ -191,7 +191,7 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
         [abs(x[i] - x[j]) != 1 for i in range(size) for j in range(i + 1, size) if abs(i - j) == 4],
 
         # Forced amazons at specific positions
-        [x[row - 1] == col for row, col in placed_amazons]
+        [x[row] == col for row, col in placed_amazons]
     )
 
     # output[i][j] == 1 iff there is an amazon at row i and column j
@@ -203,7 +203,7 @@ def amazons_cp(size: int, placed_amazons: list[(int, int)]) -> (bool, list[list[
         status = True
         # Fill the output grid with solution
         for i in range(size):
-            output[i][x[i].value - 1] = 1
+            output[i][x[i].value] = 1
     else:
         status = False
 

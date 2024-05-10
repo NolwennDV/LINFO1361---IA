@@ -1,14 +1,21 @@
-==================================[MINISAT]===================================
-| Conflicts |     ORIGINAL     |              LEARNT              | Progress |
-|           | Clauses Literals |   Limit Clauses Literals  Lit/Cl |          |
-==============================================================================
-|         0 |      35       75 |      11       0        0     nan |  0.000 % |
-==============================================================================
+WARNING: for repeatability, setting FPU to use double precision
+============================[ Problem Statistics ]=============================
+|                                                                             |
+|  Number of variables:            15                                         |
+|  Number of clauses:              35                                         |
+|  Parse time:                   0.00 s                                       |
+|                                                                             |
+============================[ Search Statistics ]==============================
+| Conflicts |          ORIGINAL         |          LEARNT          | Progress |
+|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl |          |
+===============================================================================
+===============================================================================
 restarts              : 1
 conflicts             : 0              (0 /sec)
-decisions             : 7              (2489 /sec)
-propagations          : 15             (5334 /sec)
-conflict literals     : 0              ( nan % deleted)
-CPU time              : 0.002812 s
+decisions             : 7              (0.00 % random) (2201 /sec)
+propagations          : 15             (4717 /sec)
+conflict literals     : 0              (-nan % deleted)
+Memory used           : 11.00 MB
+CPU time              : 0.00318 s
 
 SATISFIABLE

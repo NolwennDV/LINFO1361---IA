@@ -1,6 +1,6 @@
 <instance format="XCSP3" type="CSP">
   <variables>
-    <array id="x" note="x[i] is the value (col j) at row i" size="[25]"> 1..25 </array>
+    <array id="x" note="x[i] is the value (col j) at row i" size="[25]"> 0..24 </array>
   </variables>
   <constraints>
     <allDifferent note="Ensure all rows and columns contain unique amazons"> x[] </allDifferent>
@@ -410,7 +410,7 @@
       <args> x[20] x[24] </args>
     </group>
     <instantiation note="Forced amazons at specific positions">
-      <list> x[24] x[0] x[3] </list>
+      <list> x[0..1] x[4] </list>
       <values> 0 5 6 </values>
     </instantiation>
   </constraints>
